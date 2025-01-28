@@ -3,43 +3,58 @@ import React, { useState, useEffect } from 'react';
 const OptionFlowTable = () => {
   const [optionsData, setOptionsData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);  // Agregar un estado de error
+  const [ticker, setTicker] = useState('SPY'); // Estado para el ticker
+  const [search, setSearch] = useState(''); // Estado para el input de búsqueda
 
-  const SYMBOL = 'aapl';
-  const API_KEY = process.env.REACT_APP_API_KEY;
+  const API_KEY = '8yz8VWhwVib720bkCz_oNLAoIrcmcREj';
 
+  // Función para hacer la consulta de los datos
   const fetchOptionsData = async () => {
+    if (!ticker) return; // Evitar hacer la consulta si no hay un ticker
+    setLoading(true);
     try {
-      const response = await fetch("https://api.polygon.io/v3/reference/options/contracts?ticker=spy&limit=10&apiKey=8yz8VWhwVib720bkCz_oNLAoIrcmcREj");
+      const response = await fetch(`https://api.polygon.io/v3/reference/options/contracts?ticker=${ticker}&contract_type=put&limit=10&apiKey=${API_KEY}`);
       const data = await response.json();
-
-      if (data.results && data.results.length > 0) {
-        setOptionsData(data.results);
-      } else {
-        setError('No data available for this contract or symbol.');
-      }
+      console.log('Datos de opciones:', data); // Verifica la estructura de los datos
+      setOptionsData(data.results || []); // Asegura que se tome 'results' si está presente
       setLoading(false);
     } catch (error) {
       console.error('Error al obtener los datos de opciones:', error);
-      setError('Failed to fetch data.');
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchOptionsData();
-    const interval = setInterval(fetchOptionsData, 60000);
-    return () => clearInterval(interval);
-  }, [API_KEY]);
+  }, [ticker]); // Re-efectuar cada vez que el ticker cambie
+
+  const handleSearchChange = (event) => {
+    setSearch(event.target.value);
+  };
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    setTicker(search.toUpperCase()); // Cambia el ticker basado en la búsqueda
+  };
 
   return (
     <div className="option-flow-table">
-      <h2>Option Contracts {SYMBOL}</h2>
+      <h2>Options Contracts {ticker}</h2>
+
+      {/* Formulario para buscar el ticker */}
+      <form onSubmit={handleSearchSubmit}>
+        <input
+          type="text"
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Ingrese un ticker"
+        />
+        <button type="submit">Submit</button>
+      </form>
+
       {loading ? (
-        <p>Loading option data...</p>
-      ) : error ? (
-        <p>{error}</p>  // Mostrar mensaje de error si no hay datos
-      ) : (
+        <p>Loading option data...</p>) :
+         (
         <table>
           <thead>
             <tr>
@@ -51,15 +66,21 @@ const OptionFlowTable = () => {
             </tr>
           </thead>
           <tbody>
-            {optionsData.map((option, index) => (
-              <tr key={index}>
-                <td>{option.ticker}</td>
-                <td>{option.strike_price}</td>
-                <td>{option.expiration_date}</td>
-                <td>{option.volume}</td>
-                <td>{option.open_interest}</td>
+            {optionsData.length > 0 ? (
+              optionsData.map((option, index) => (
+                <tr key={index}>
+                  <td>{option.symbol}</td>
+                  <td>{option.strike_price}</td>
+                  <td>{option.expiration_date}</td>
+                  <td>{option.volume}</td>
+                  <td>{option.open_interest}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5">No data available</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       )}

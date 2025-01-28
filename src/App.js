@@ -5,7 +5,7 @@ import OptionFlowTable from './OptionFlowTable'; // Importa el componente Option
 const App = () => {
   return (
     <div className="App">
-      <h1>Opciones de acciones</h1>
+      <h1>Flow Track</h1>
       {/* Renderiza el componente OptionFlowTable */}
       <OptionFlowTable />
     </div>
